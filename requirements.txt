@@ -1,0 +1,11 @@
+opencv-python
+numpy
+PyAudio
+SpeechRecognition
+scipy
+librosa
+matplotlib
+transformers
+torch
+torchvision
+torchaudio
