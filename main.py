@@ -233,6 +233,7 @@ class VisualAnalyzer:
         self.last_frame_had_eye_contact = False
         self.facial_landmarks_history = deque(maxlen=10) # face_recognition landmarks
         self.head_position_history = deque(maxlen=15) # (center_x, center_y) of face bbox
+        self.no_face_in_previous_frame = True
 
         # Parameters for scoring components (0-10)
         self.MAX_EYE_CONTACT_FRAMES_FOR_SCORE = 30
@@ -359,6 +360,20 @@ class VisualAnalyzer:
             primary_face_location_scaled = face_locations_scaled[0] # (top, right, bottom, left)
             primary_landmarks_scaled = all_face_landmarks_scaled[0]
 
+            if self.no_face_in_previous_frame:
+                self.facial_landmarks_history.clear()
+                self.head_position_history.clear()
+                self.eye_contact_frames = 0
+                self.confidence_score_visual = 50.0
+                self.confidence_history_visual.clear()
+                self.confidence_history_visual.append(50.0)
+                print("DEBUG: New face detected! Resetting visual histories and score.")
+                print(f"DEBUG: self.confidence_score_visual after reset: {self.confidence_score_visual}")
+                print(f"DEBUG: len(self.facial_landmarks_history) after reset: {len(self.facial_landmarks_history)}")
+                print(f"DEBUG: len(self.head_position_history) after reset: {len(self.head_position_history)}")
+
+            self.no_face_in_previous_frame = False
+
             self.facial_landmarks_history.append(primary_landmarks_scaled)
 
             eye_score = self._analyze_eye_contact_from_landmarks(primary_landmarks_scaled)
@@ -384,6 +399,7 @@ class VisualAnalyzer:
         else:
             # No face detected, decrease visual confidence
             current_visual_score_delta = -0.5 # Penalty if no face
+            self.no_face_in_previous_frame = True
 
         # Update and smooth the visual confidence score (0-100)
         self.confidence_score_visual += current_visual_score_delta
